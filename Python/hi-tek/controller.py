@@ -4,6 +4,9 @@ import time
 import serial
 import numpy as np
 
+use_serial = False
+use_controller = False
+
 last_received = ''
 
 
@@ -76,17 +79,17 @@ def getkey():
             elif(name == "r"):
                 rpressed = True
     if(wpressed):
-        leftspeed = leftspeed + 100
-        rightspeed = rightspeed + 100
-    if(spressed):
-        leftspeed = leftspeed - 100
-        rightspeed = rightspeed - 100
-    if(apressed):
-        leftspeed = leftspeed - 30
-        rightspeed = rightspeed + 30
-    if(dpressed):
         leftspeed = leftspeed + 30
+        rightspeed = rightspeed + 30
+    if(spressed):
+        leftspeed = leftspeed - 30
         rightspeed = rightspeed - 30
+    if(apressed):
+        leftspeed = leftspeed - 20
+        rightspeed = rightspeed + 20
+    if(dpressed):
+        leftspeed = leftspeed + 20
+        rightspeed = rightspeed - 20
     if (prerpressed and (not rpressed)):
         reversed = not reversed
     if(leftspeed > 100):
@@ -102,29 +105,32 @@ def getkey():
         leftspeed = -rightspeed
         rightspeed = -c
 if __name__ == '__main__':
-    s = SerialData()
+    if use_serial:
+        s = SerialData()
 
     pygame.init()  # Initialize the PyGame package
     pygame.display.set_mode((1000, 600))  # Make the window 1000*600
     pygame.display.set_caption('Testing')  # Make the caption "Testing"
-    pygame.joystick.init()
-    joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-    for joystick in joysticks:
-        joystick.init()
-        print joystick.get_name
+    if use_controller:
+        pygame.joystick.init()
+        joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+        for joystick in joysticks:
+            joystick.init()
+            print joystick.get_name
     while True:
         pygame.event.pump()
         getkey()
-        throttleval = joysticks[2].get_axis(2)
-        throttleval = int(127.0 - 128.0 * throttleval)
-        if(throttleval <= 0):
-           throttleval = 1
+        if use_controller:
+            throttleval = joysticks[2].get_axis(2)
+            throttleval = int(127.0 - 128.0 * throttleval)
+            if(throttleval <= 0):
+               throttleval = 1
+        else:
+            throttleval = 1
         leftspeed = int(leftspeed*127/100.0+128)
         rightspeed = int(rightspeed*127/100.0+128)
-        print throttleval
-        # s.send(chr(leftspeed))
-        # s.send(chr(rightspeed))
-        s.send(bytearray([leftspeed,rightspeed,throttleval]))
-        # s.send(bytes([throttleval]))
-        s.send(',')
+        print str(leftspeed) + " " + str(rightspeed) + " " + str(throttleval)
+        if use_serial:
+            s.send(bytearray([leftspeed,rightspeed,throttleval]))
+            s.send(',')
         time.sleep(0.05)
