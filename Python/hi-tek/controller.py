@@ -6,11 +6,12 @@ import numpy as np
 
 use_serial = False
 use_controller = False
+invertible = True
 
 last_received = ''
 
-
 COMport = 'com22'
+
 
 def receiving(serial_port):
     global last_received
@@ -30,7 +31,7 @@ def receiving(serial_port):
 class SerialData(object):
     def __init__(self):
         try:
-            self.serial_port = serial.Serial(COMport,2400)
+            self.serial_port = serial.Serial(COMport, 2400)
         except serial.serialutil.SerialException:
             # no serial connection
             self.serial_port = None
@@ -44,20 +45,22 @@ class SerialData(object):
         if self.serial_port is not None:
             self.serial_port.close()
 
+
 leftspeed = 0
 rightspeed = 0
 prerpressed = False
 rpressed = False
 reversed = False
 
+
 def getkey():
     global leftspeed
     global rightspeed
-    global  prerpressed
+    global prerpressed
     global rpressed
     global reversed
-    leftspeed = 0;
-    rightspeed = 0;
+    leftspeed = 0
+    rightspeed = 0
     wpressed = False
     spressed = False
     apressed = False
@@ -67,7 +70,7 @@ def getkey():
     press = pygame.key.get_pressed()
     for i in xrange(0, len(press)):
         if press[i] == 1:
-            name =  pygame.key.name(i)
+            name = pygame.key.name(i)
             if(name == "w"):
                 wpressed = True
             elif(name == "s"):
@@ -79,17 +82,17 @@ def getkey():
             elif(name == "r"):
                 rpressed = True
     if(wpressed):
-        leftspeed = leftspeed + 30
-        rightspeed = rightspeed + 30
+        leftspeed = leftspeed + 100
+        rightspeed = rightspeed + 100
     if(spressed):
-        leftspeed = leftspeed - 30
-        rightspeed = rightspeed - 30
+        leftspeed = leftspeed - 100
+        rightspeed = rightspeed - 100
     if(apressed):
-        leftspeed = leftspeed - 20
-        rightspeed = rightspeed + 20
+        leftspeed = leftspeed - 100
+        rightspeed = rightspeed + 100
     if(dpressed):
-        leftspeed = leftspeed + 20
-        rightspeed = rightspeed - 20
+        leftspeed = leftspeed + 100
+        rightspeed = rightspeed - 100
     if (prerpressed and (not rpressed)):
         reversed = not reversed
     if(leftspeed > 100):
@@ -104,6 +107,8 @@ def getkey():
         c = leftspeed
         leftspeed = -rightspeed
         rightspeed = -c
+
+
 if __name__ == '__main__':
     if use_serial:
         s = SerialData()
@@ -113,7 +118,8 @@ if __name__ == '__main__':
     pygame.display.set_caption('Testing')  # Make the caption "Testing"
     if use_controller:
         pygame.joystick.init()
-        joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+        joysticks = [pygame.joystick.Joystick(
+            x) for x in range(pygame.joystick.get_count())]
         for joystick in joysticks:
             joystick.init()
             print joystick.get_name
@@ -121,16 +127,26 @@ if __name__ == '__main__':
         pygame.event.pump()
         getkey()
         if use_controller:
-            throttleval = joysticks[2].get_axis(2)
-            throttleval = int(127.0 - 128.0 * throttleval)
-            if(throttleval <= 0):
-               throttleval = 1
+            throttleval = joysticks[0].get_axis(2)
+            if invertible:
+                throttleval = int(63.5 - 63.5 * throttleval)
+                if reversed:
+                    throttleval += 127
+                else:
+                    throttleval = 128 - throttleval
+            else:
+                throttleval = int(127.0 - 128.0 * throttleval)
+                if(throttleval <= 0):
+                    throttleval = 1
         else:
-            throttleval = 1
-        leftspeed = int(leftspeed*127/100.0+128)
-        rightspeed = int(rightspeed*127/100.0+128)
+            if invertible:
+                throttleval = 127
+            else:
+                throttleval = 1
+        leftspeed = int(leftspeed * 127 / 100.0 + 128)
+        rightspeed = int(rightspeed * 127 / 100.0 + 128)
         print str(leftspeed) + " " + str(rightspeed) + " " + str(throttleval)
         if use_serial:
-            s.send(bytearray([leftspeed,rightspeed,throttleval]))
+            s.send(bytearray([leftspeed, rightspeed, throttleval]))
             s.send(',')
         time.sleep(0.05)
