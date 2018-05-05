@@ -6,11 +6,15 @@ import numpy as np
 
 use_serial = True
 use_controller = True
-invertible = False
+invertible = True
+
+lowrange = True
+
+firsttime = True
 
 last_received = ''
 
-COMport = 'com11'
+COMport = 'com18'
 
 
 def receiving(serial_port):
@@ -128,14 +132,22 @@ if __name__ == '__main__':
         getkey()
         if use_controller:
             throttleval = joysticks[2].get_axis(2)
+            if joysticks[2].get_button(1) == 1:
+                lowrange = True
+            elif joysticks[2].get_button(2) == 1:
+                lowrange = False
             if invertible:
                 throttleval = int(63.5 - 63.5 * throttleval)
+                if lowrange:
+                    throttleval = int(throttleval/3)
                 if reversed:
                     throttleval += 127
                 else:
                     throttleval = 128 - throttleval
             else:
                 throttleval = int(127.0 - 128.0 * throttleval)
+                if lowrange:
+                    throttleval = int(throttleval/3)
                 if(throttleval <= 0):
                     throttleval = 1
         else:
@@ -143,6 +155,13 @@ if __name__ == '__main__':
                 throttleval = 127
             else:
                 throttleval = 1
+        if throttleval == 44:
+            throttleval = throttleval + 1
+        if firsttime:
+            throttleval = 1
+            if invertible:
+                throttleval = 127
+            firsttime = False
         leftspeed = int(leftspeed * 127 / 100.0 + 128)
         rightspeed = int(rightspeed * 127 / 100.0 + 128)
         print str(leftspeed) + " " + str(rightspeed) + " " + str(throttleval)
