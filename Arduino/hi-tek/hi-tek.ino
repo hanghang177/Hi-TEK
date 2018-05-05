@@ -13,7 +13,7 @@
 
 #define timeout 1000
 
-#define invertible 1
+#define invertible 0
 
 Servo weapon;
 Servo left;
@@ -67,6 +67,13 @@ void failsafe(){
   }
 }
 
+void writeweapon(int pwm){
+  digitalWrite(3, HIGH);
+  delayMicroseconds(pwm);
+  digitalWrite(3, LOW);
+  delayMicroseconds(9700 - pwm);
+}
+
 void go(){
   if(invertible == 1){
     if((-500 <= weaponspeed) && (weaponspeed <= 500)){
@@ -81,12 +88,12 @@ void go(){
   }else{
     if((0 <= weaponspeed) && (weaponspeed <= 1000)){
       if(weaponspeed <= 100){
-        weapon.writeMicroseconds(1000);
+        writeweapon(1000);
       }else{
-        weapon.writeMicroseconds(1000 + weaponspeed);
+        writeweapon(1000 + weaponspeed);
       }
     }else{
-      weapon.writeMicroseconds(1000);
+      writeweapon(1000);
     }
   }
   if(leftspeed >= 0){
@@ -113,8 +120,9 @@ void setup() {
   }
   pinMode(11, OUTPUT);
   pinMode(13, OUTPUT);
+  pinMode(3, OUTPUT);
   mySerial.begin(2400);
-  weapon.attach(weaponmotor);
+  //weapon.attach(weaponmotor);
   if(invertible == 1){
     weapon.writeMicroseconds(1500);
   }else{

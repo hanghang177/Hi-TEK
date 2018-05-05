@@ -4,13 +4,13 @@ import time
 import serial
 import numpy as np
 
-use_serial = False
-use_controller = False
-invertible = True
+use_serial = True
+use_controller = True
+invertible = False
 
 last_received = ''
 
-COMport = 'com22'
+COMport = 'com11'
 
 
 def receiving(serial_port):
@@ -127,7 +127,7 @@ if __name__ == '__main__':
         pygame.event.pump()
         getkey()
         if use_controller:
-            throttleval = joysticks[0].get_axis(2)
+            throttleval = joysticks[2].get_axis(2)
             if invertible:
                 throttleval = int(63.5 - 63.5 * throttleval)
                 if reversed:
